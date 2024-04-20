@@ -13,8 +13,8 @@ class App
     @width = @@canvas.width
     @height = @@canvas.height
     @resizable = false
-    @player_score = Player::Score.new
-    @rival_score = Rival::Score.new
+    @player1_score = Player::Score.new
+    @player2_score = Rival::Score.new
     @size = 20
     @color = 'white'
     @game_point = 2
@@ -37,16 +37,16 @@ class App
   end
 
   def build_components
-    @player_stick = Player::Stick.new
-    @rival_stick = Rival::Stick.new
+    @player1_stick = Player::Stick.new
+    @player2_stick = Rival::Stick.new
     @ball = Shared::Ball.new
     print_divisory_line
   end
 
   def update_game
     $engine.update do
-      @player_stick.update_position
-      @rival_stick.update_position
+      @player1_stick.update_position
+      @player2_stick.update_position
       @ball.update_position
 
       handle_ball_bounce
@@ -61,13 +61,13 @@ class App
 
   def update_movements
     $engine.on :key_held do |event|
-      @player_stick.update_movement(event)
-      @rival_stick.update_movement(event)
+      @player1_stick.update_movement(event)
+      @player2_stick.update_movement(event)
     end
 
     $engine.on :key_up do |event|
-      @player_stick.update_movement(event, 0)
-      @rival_stick.update_movement(event, 0)
+      @player1_stick.update_movement(event, 0)
+      @player2_stick.update_movement(event, 0)
     end
   end
 
@@ -78,11 +78,11 @@ class App
   def print_texts
     @texts&.each(&:remove)
 
-    @texts = [Text.new("Player: #{@player_score.value}",
+    @texts = [Text.new("Player1: #{@player1_score.value}",
                        x: @@canvas.margin,
                        y: @@canvas.margin,
                        size:, color:),
-              Text.new("Rival: #{@rival_score.value}",
+              Text.new("player2: #{@player2_score.value}",
                        x: @@canvas.margin,
                        y: @@canvas.margin * 3,
                        size:, color:)]
@@ -97,19 +97,19 @@ class App
   end
 
   def handle_next_play
-    on_player_wall = @ball.x <= 0
-    on_rival_wall = @ball.x >= @@canvas.width - @ball.size
+    on_player1_wall = @ball.x <= 0
+    on_player2_wall = @ball.x >= @@canvas.width - @ball.size
 
-    return unless on_player_wall || on_rival_wall
+    return unless on_player1_wall || on_player2_wall
 
     @ball.move_to_initial_position
 
-    @rival_score.score! if on_player_wall
-    @player_score.score! if on_rival_wall
+    @player2_score.score! if on_player1_wall
+    @player1_score.score! if on_player2_wall
   end
 
   def handle_stick_bounce
-    agents = %w[player rival]
+    agents = %w[player1 player2]
 
     agents.each do |agent|
       handle_generic_stick_bounce(agent)
@@ -145,16 +145,16 @@ class App
     @ball.bounce!(direction)
   end
 
-  def colides_with_player_stick?
-    if @ball.left <= @player_stick.right && (@ball.botton >= @player_stick.top && @ball.top <= @player_stick.botton)
+  def colides_with_player1_stick?
+    if @ball.left <= @player1_stick.right && (@ball.botton >= @player1_stick.top && @ball.top <= @player1_stick.botton)
       return true
     end
 
     false
   end
 
-  def colides_with_rival_stick?
-    if @ball.right >= @rival_stick.left && (@ball.botton >= @rival_stick.top && @ball.top <= @rival_stick.botton)
+  def colides_with_player2_stick?
+    if @ball.right >= @player2_stick.left && (@ball.botton >= @player2_stick.top && @ball.top <= @player2_stick.botton)
       return true
     end
 
@@ -162,14 +162,14 @@ class App
   end
 
   def check_end_game
-    if @player_score.value == @game_point
+    if @player1_score.value == @game_point
       $engine.close
       system('figlet Player Wins!')
-      system("figlet #{@player_score.value} x #{@rival_score.value}")
-    elsif @rival_score.value == @game_point
+      system("figlet #{@player1_score.value} x #{@player2_score.value}")
+    elsif @player2_score.value == @game_point
       $engine.close
-      system('figlet Rival Wins!')
-      system("figlet #{@rival_score.value} x #{@player_score.value}")
+      system('figlet player2 Wins!')
+      system("figlet #{@player2_score.value} x #{@player1_score.value}")
     end
   end
 
